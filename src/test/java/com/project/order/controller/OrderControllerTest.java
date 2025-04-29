@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class OrderControllerTest {
@@ -42,4 +43,19 @@ class OrderControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(orderSavedInDB, response.getBody());
     }
+    @Test
+    void saveOrder_whenServiceThrowsException_shouldPropagate() {
+        // Arrange
+        OrderDTOFromFE orderDetails = new OrderDTOFromFE();
+        when(orderService.saveOrderInDb(orderDetails))
+                .thenThrow(new RuntimeException("DB failure"));
+
+        // Act & Assert
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+            orderController.saveOrder(orderDetails);
+        });
+        assertEquals("DB failure", ex.getMessage());
+        verify(orderService, times(1)).saveOrderInDb(orderDetails);
+    }
+
 }
